@@ -44,6 +44,7 @@
     name: elasticsearch
     state: "{{ elasticsearch_service_state }}"
     enabled: "{{ elasticsearch_service_enabled }}"
+    use: "{{ gestionnaire_service }}"
 
 - name: Make sure Elasticsearch is running before proceeding.
   wait_for:
