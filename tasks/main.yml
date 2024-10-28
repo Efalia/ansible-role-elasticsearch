@@ -10,12 +10,16 @@
   apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     state: present
+  when:
+    - config_system
 
 - name: Add Elasticsearch repository.
   apt_repository:
     repo: 'deb https://artifacts.elastic.co/packages/{{ elasticsearch_version }}/apt stable main'
     state: present
     update_cache: true
+  when:
+    - config_system
 
 - name: Install Elasticsearch.
   package:
