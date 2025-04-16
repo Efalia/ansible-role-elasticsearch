@@ -7,5 +7,5 @@
     name: elasticsearch
     state: restarted
   when:
-    - 'elasticsearch' in ansible_facts.services
+    - "'elasticsearch' in ansible_facts.services"
     - ansible_facts.services['elasticsearch'].state == 'running'
