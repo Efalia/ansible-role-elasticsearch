@@ -1,9 +1,4 @@
 ---
-- name: Check if service manager is supported
-  fail:
-    msg: "Unsupported service manager: {{ ansible_service_mgr }}"
-  when: ansible_service_mgr not in ['systemd', 'sysvinit']
-
 - name: restart elasticsearch
   include_tasks: "restart/{{ ansible_service_mgr }}.yml"
-  when: ansible_service_mgr in ['systemd', 'sysvinit']
+  when: ansible_service_mgr in ['systemd']
