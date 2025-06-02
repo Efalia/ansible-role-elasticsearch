@@ -9,7 +9,9 @@
   stat:
     path: /.dockerenv
   register: docker_env
-
+- name: Debug .dockerenv
+  debug:
+    var: docker_env.stat.exists
 - name: Add Elasticsearch apt key.
   apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
