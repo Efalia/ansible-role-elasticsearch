@@ -5,6 +5,10 @@
       - apt-transport-https
       - gnupg2
     state: present
+- name: Detection Docker
+  stat:
+    path: /.dockerenv
+  register: docker_env
 
 - name: Add Elasticsearch apt key.
   apt_key:
@@ -48,6 +52,7 @@
     name: elasticsearch
     state: "{{ elasticsearch_service_state }}"
     enabled: "{{ elasticsearch_service_enabled }}"
+  when: docker_env.stat.exists == False
 
 - name: Make sure Elasticsearch is running before proceeding.
   wait_for:
@@ -55,3 +60,4 @@
     port: "{{ elasticsearch_http_port }}"
     delay: 3
     timeout: 300
+  when: docker_env.stat.exists == False
