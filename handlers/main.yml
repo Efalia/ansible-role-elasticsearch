@@ -1,17 +1,4 @@
 ---
 - name: restart elasticsearch
-  block:
-    - name: Delete keystore
-      file:
-        path: /etc/elasticsearch/elasticsearch.keystore
-        state: absent
-    - name: Create new keystore
-      command: /usr/share/elasticsearch/bin/elasticsearch-keystore create
-      become: yes
-      become_user: elasticsearch
-    - name: Restart elasticsearch with systemd
-      systemd:
-        name: elasticsearch
-        state: restarted
-        daemon_reload: true
+  include_tasks: restart.yml
   when: ansible_service_mgr in ['systemd']
