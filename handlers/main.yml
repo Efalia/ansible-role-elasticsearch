@@ -1,4 +1,3 @@
 ---
 - name: restart elasticsearch
-  include_tasks: "restart/{{ ansible_service_mgr }}.yml"
-  when: ansible_service_mgr in ['systemd']
+  include_tasks: restart.yml

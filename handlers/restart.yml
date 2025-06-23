@@ -1,0 +1,17 @@
+---
+- name: Delete keystore
+  file:
+    path: /etc/elasticsearch/elasticsearch.keystore
+    state: absent
+  when: elasticsearch_version[0] | int >= 8
+
+- name: Create new keystore
+  command: /usr/share/elasticsearch/bin/elasticsearch-keystore create
+  when: elasticsearch_version[0] | int >= 8
+
+- name: Restart elasticsearch with systemd
+  systemd:
+    name: elasticsearch
+    state: restarted
+    daemon_reload: true
+  when: ansible_service_mgr in ['systemd']
