@@ -44,6 +44,29 @@
   notify: restart elasticsearch
   when: elasticsearch_version[0] | int >= 7
 
+- name: Clean des nodes en docker
+  file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - "/var/lib/elasticsearch/nodes/0/node.lock"
+    - "/var/lib/elasticsearch/nodes/0/snapshot_cache/write.lock"
+    - "/etc/elasticsearch/elasticsearch.keystore"
+  when: docker_env.stat.exists == True
+
+- name: Regenerate keystore en docker
+  shell: /usr/share/elasticsearch/bin/elasticsearch-keystore create
+  when: docker_env.stat.exists == True
+
+- name: Generation du fichier systemV en docker
+  copy:
+    src: "../templates/elasticsearch"
+    dest: "/etc/init.d/elasticsearch"
+    owner: root
+    group: root
+    mode: 0750
+  when: docker_env.stat.exists == True
+
 - name: Force a restart if configuration has changed.
   meta: flush_handlers
 
@@ -52,7 +75,6 @@
     name: elasticsearch
     state: "{{ elasticsearch_service_state }}"
     enabled: "{{ elasticsearch_service_enabled }}"
-  when: docker_env.stat.exists == False
 
 - name: Make sure Elasticsearch is running before proceeding.
   wait_for:
@@ -60,4 +82,3 @@
     port: "{{ elasticsearch_http_port }}"
     delay: 3
     timeout: 300
-  when: docker_env.stat.exists == False
