@@ -45,20 +45,6 @@
   notify: restart elasticsearch
   when: elasticsearch_version[0] | int >= 7
 
-- name: Clean des nodes en docker
-  file:
-    path: '{{ item }}'
-    state: absent
-  loop:
-    - "/var/lib/elasticsearch/nodes/0/node.lock"
-    - "/var/lib/elasticsearch/nodes/0/snapshot_cache/write.lock"
-    - "/etc/elasticsearch/elasticsearch.keystore"
-  when: docker_env.stat.exists == True
-
-- name: Regenerate keystore en docker
-  shell: /usr/share/elasticsearch/bin/elasticsearch-keystore create
-  when: docker_env.stat.exists == True
-
 - name: Generation du fichier systemV en docker
   copy:
     src: "../templates/elasticsearch"
