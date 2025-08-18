@@ -45,6 +45,9 @@
   notify: restart elasticsearch
   when: elasticsearch_version[0] | int >= 7
 
+- name: Install plugin
+  shell: "if [ ! -d '/usr/share/elasticsearch/plugins/analysis-icu' ]; then /usr/share/elasticsearch/bin/elasticsearch-plugin install file://{{ role_path }}/plugins/analysis-icu-8.18.4.zip;fi"
+
 - name: Clean des nodes en docker
   file:
     path: '{{ item }}'
