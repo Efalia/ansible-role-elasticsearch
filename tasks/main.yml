@@ -1,4 +1,32 @@
 ---
+- name: Check if Elasticsearch is installed
+  stat:
+    path: /usr/share/elasticsearch/bin/elasticsearch
+  register: stat_result
+
+- name: Set fact from previous task
+  set_fact:
+    es_new_install: not stat_result.stat.exists
+
+- name: Current Elasticsearch version (shell command)
+  shell:  "/usr/share/elasticsearch/bin/elasticsearch --version"
+  register: es_versions_shell
+  ignore_errors: true
+  when: not es_new_install
+
+- name: Current Elasticsearch version (set fact)
+  set_fact:
+    current_es_version: "{{ es_version_shell.stdout|split(',')|first|split(': ')|last }}"
+  when: not es_new_install
+
+- name: Asked Elasticsearch version
+  set_fact:
+    asked_es_version: "{{ elasticsearch_package|split('=')|last }}"
+
+- name: Elasticsearch version change
+  set_fact:
+    change_es_value: "{{ es_new_install or not asked_es_version == current_es_version }}"
+
 - name: Add required dependencies.
   apt:
     name:
@@ -25,6 +53,10 @@
   when:
     - config_system
 
+- name: Clean des plugins
+  when: change_es_value and not es_new_install
+  shell: "/usr/share/elasticsearch/bin/elasticsearch-plugin remove analysis-icu"
+
 - name: Install Elasticsearch.
   apt:
     allow_change_held_packages: true
@@ -44,9 +76,6 @@
     - /etc/elasticsearch/jvm.options.d/heap.options
   notify: restart elasticsearch
   when: elasticsearch_version[0] | int >= 7
-
-- name: Install plugin
-  shell: "if [ ! -d '/usr/share/elasticsearch/plugins/analysis-icu' ]; then /usr/share/elasticsearch/bin/elasticsearch-plugin install file://{{ role_path }}/plugins/analysis-icu-8.18.4.zip;fi"
 
 - name: Clean des nodes en docker
   file:
@@ -79,6 +108,21 @@
     name: elasticsearch
     state: "{{ elasticsearch_service_state }}"
     enabled: "{{ elasticsearch_service_enabled }}"
+
+- name: Check plugin compatibility
+  stat:
+    path: "{{ role_path }}/plugins/analysis-icu-{{ asked_es_version }}.zip"
+  register: plugin_stat
+
+- name: Check plugin installation
+  shell: "/usr/share/elasticsearch/bin/elasticsearch-plugin list"
+  register: es_plugin_list
+
+- name: Install plugin
+  shell: "/usr/share/elasticsearch/bin/elasticsearch-plugin install file://{{ role_path }}/plugins/analysis-icu-{{ asked_es_version }}.zip"
+  when:
+    - plugin_stat.stat.exists
+    - "{{ not 'analysis-icu' in es_version_shell.stdout_lines }}"
 
 - name: Make sure Elasticsearch is running before proceeding.
   wait_for:
