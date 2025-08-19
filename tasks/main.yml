@@ -6,11 +6,11 @@
 
 - name: Set fact from previous task
   set_fact:
-    es_new_install: not stat_result.stat.exists
+    es_new_install: "{{ not stat_result.stat.exists }}"
 
 - name: Current Elasticsearch version (shell command)
   shell:  "/usr/share/elasticsearch/bin/elasticsearch --version"
-  register: es_versions_shell
+  register: es_version_shell
   ignore_errors: true
   when: not es_new_install
 
