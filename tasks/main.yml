@@ -5,10 +5,16 @@
       - apt-transport-https
       - gnupg2
     state: present
-- name: Detection Docker
+
+- name: Detection de l'environnement Docker
   stat:
     path: /.dockerenv
   register: docker_env
+
+- name: Detection du build Docker
+  stat:
+    path: /.dockerbuild
+  register: docker_build
 
 - name: Add Elasticsearch apt key.
   apt_key:
@@ -52,7 +58,17 @@
     owner: root
     group: root
     mode: 0750
-  when: docker_env.stat.exists == True
+  when: docker_env.stat.exists | bool
+
+# Impossible de démarrer ES dans un environnement Docker amd64 en émulation depuis un hôte arm64 avec Docker Desktop.
+# L'option CONFIG_SECCOMP n'est pas compilée dans le noyau "linuxkit amd64" utilisé par Docker Desktop pour l'émulation amd64 sur une machine arm64.
+# Ce qui est obligatoire pour le fonctionnement d'Elasticsearch 8+.
+# Voir notamment : https://github.com/docker/for-mac/issues/7410
+# Cette situation n'apparait que lors du build de l'image multiarch.
+# De plus il est inutile de démarrer ES lors du build d'une image.
+- name: Quitte le playbook si on build une image Docker
+  meta: end_play
+  when: docker_build.stat.exists | bool
 
 - name: Force a restart if configuration has changed.
   meta: flush_handlers
