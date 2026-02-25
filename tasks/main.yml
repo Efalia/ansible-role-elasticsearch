@@ -51,6 +51,23 @@
   notify: restart elasticsearch
   when: elasticsearch_version[0] | int >= 7
 
+# Suppression et régénération du Keystore en environnement Docker, car ES 8+ active
+# la sécurité par défaut : le Keystore est généré à l'installation d'ES avec des configurations
+# de sécurité activées même si la variable 'transport.ssl.enabled' est à false (ce qui est le cas).
+# Il y a donc une incohérence entre le keystore et le paramétrage de l'application (diantre),
+# et le serveur ne démarre pas.
+# En regénérant le keystore, ce dernier correspond à la vraie configuration d'ES.
+# En dehors du contexte de Docker, la même bidouille est faite, mais automatiquement par Systemd.
+- name: Suppression du Keystore en environnement Docker
+  file:
+    path: /etc/elasticsearch/elasticsearch.keystore
+    state: absent
+  when: docker_env.stat.exists | bool
+
+- name: Régénération du Keystore en environnement Docker
+  shell: /usr/share/elasticsearch/bin/elasticsearch-keystore create
+  when: docker_env.stat.exists | bool
+
 - name: Generation du fichier systemV en docker
   copy:
     src: "../templates/elasticsearch"
